@@ -76,9 +76,11 @@ model_params = {
     "width": map_width,
     "density": UserSettableParameter("slider", "Agent density", 0.8, 0.01, 1.0, 0.01),
     "minority_pc": UserSettableParameter(
-        "slider", "Fraction minority", 0.25, 0.00, 1.0, 0.01
+        "slider", "Fraction minority", 0.3, 0.00, 1.0, 0.01
     ),
-    "homophily": UserSettableParameter("slider", "Homophily", 4, 0, 8, 0.1),
+    "homophily": UserSettableParameter("slider", "Homophily", 4, 0, 8, 1),
+    "socioeconomic_homophily_reds": 3,
+    "socioeconomic_homophily_blues": 5
 }
 
 server = ModularServer(
