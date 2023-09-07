@@ -1,4 +1,4 @@
-from model import Schelling
+from model3 import Schelling
 from mesa.batchrunner import BatchRunner
 from datetime import datetime
 from random import seed

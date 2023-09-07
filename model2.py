@@ -25,13 +25,15 @@ class SchellingAgent(Agent):
 
     def step(self):
         similar = 0
+        total_neighbors = 0
         for neighbor in self.model.grid.iter_neighbors(self.pos, moore=True,
                                                        radius=1):  # Adjust vision here to Moore (square neighborhood) and radius size
+            total_neighbors += 1
             if neighbor.type == self.type:
                 similar += 1
 
         # If unhappy, move to a location within their socioeconomic limits
-        if similar < self.model.homophily:
+        if total_neighbors == 0 or ((similar / total_neighbors) < self.model.homophily):
             if self.type == 1:
                 if len(self.model.potential_blue_cells) != 0:       # Agent will not move if there are no potential locations left
                     new_location = self.model.random.choice(self.model.potential_blue_cells)
@@ -62,7 +64,7 @@ class Schelling(Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, height=20, width=20, density=0.8, minority_pc=0.2, homophily=3, socioeconomic_homophily_reds = 3, socioeconomic_homophily_blues = 5):
+    def __init__(self, height=20, width=20, density=0.8, minority_pc=0.2, homophily=3):
 
         self.total_satisfaction_index = 0
         self.blue_satisfaction_index  = 0
@@ -78,8 +80,6 @@ class Schelling(Model):
         self.minority_pc = minority_pc
         self.homophily = homophily
 
-        self.socioeconomic_homophily_reds = socioeconomic_homophily_reds    # How many similar agents there must be in a neighborhood to assume it is socioeconomic "correct" neighborhood
-        self.socioeconomic_homophily_blues = socioeconomic_homophily_blues
         self.potential_blue_cells = []
         self.potential_red_cells = []
 
@@ -119,7 +119,7 @@ class Schelling(Model):
         self.running = True
         self.datacollector.collect(self)
 
-
+        print("This is model 2")
     def step(self):
         """
         Run one step of the model. If All agents are happy, halt the model.
@@ -133,43 +133,25 @@ class Schelling(Model):
             y = cell[2]
 
             if self.grid.is_cell_empty((x,y)):
-                list_neighbors = [None, None, None, None, None, None, None, None]
-                neighbor_index = 0
+                list_neighbors = []
                 #print(x, y)
-                get_neighbors_list = get_neighbors_snake(x,y,self.grid)
+                get_neighbors_list = self.grid.get_neighbors((x,y),moore = True, radius = 1)
 
                 for neighbor in get_neighbors_list:
-                    if neighbor == None:
-                        neighbor_index += 1
-                    else:
-                        if neighbor.type == 1:
-                            neighbor_index += 1
-                            list_neighbors[(neighbor_index - 1)] = 1
+                    if neighbor.type == 1:
+                        list_neighbors += [1]
 
-                        elif neighbor.type == 0:
-                            neighbor_index += 1
-                            list_neighbors[(neighbor_index - 1)] = 0
+                    elif neighbor.type == 0:
+                        list_neighbors += [0]
 
-                list2 = list_neighbors.copy()
-                list_dubbel = list_neighbors + list2
-                #print(list_dubbel)
+                print(list_neighbors)
 
-                #Defining what satisfies as socioeconomic correct neighborhoods
-                for i in range(len(list_dubbel) - (self.socioeconomic_homophily_blues - 1)):
-                    if all(list_dubbel[i + j] == 1 for j in range(self.socioeconomic_homophily_blues)):
-                        #print("This location is for blues")
-                        self.potential_blue_cells.append((x, y))
-                        break
-                if list_neighbors.count(0) <= 1 and list_neighbors.count(1) >= 3:   # ensuring that locations with many similar agents but few empty cells and few majority agents are also added
+                #Defining what satisfies as homophily correct neighborhoods
+                if ((list_neighbors.count(0) + list_neighbors.count(1)) != 0) and ((list_neighbors.count(1) / (list_neighbors.count(0) + list_neighbors.count(1)))) >= self.homophily:
                     if (x,y) not in self.potential_blue_cells:
                         self.potential_blue_cells.append((x, y))
 
-                for i in range(len(list_dubbel) - (self.socioeconomic_homophily_reds)):
-                    if all(list_dubbel[i + j] == 0 for j in range(self.socioeconomic_homophily_reds)):
-                        #print("This location is for reds")
-                        self.potential_red_cells.append((x, y))
-                        break
-                if list_neighbors.count(1) <= 6 and list_neighbors.count(0) >= 2:
+                if ((list_neighbors.count(0) + list_neighbors.count(1)) != 0) and ((list_neighbors.count(0) / (list_neighbors.count(0) + list_neighbors.count(1)))) >= self.homophily:
                     if (x,y) not in self.potential_red_cells:
                         self.potential_red_cells.append((x, y))
 
