@@ -5,6 +5,7 @@ from mesa.datacollection import DataCollector
 from random import random
 from functions import get_neighbors_snake
 
+
 class SchellingAgent(Agent):
     """
     Schelling segregation agent
@@ -35,16 +36,18 @@ class SchellingAgent(Agent):
         # If unhappy, move to a location within their socioeconomic limits
         if total_neighbors == 0 or ((similar / total_neighbors) < self.model.homophily):
             if self.type == 1:
-                if len(self.model.potential_blue_cells) != 0:       # Agent will not move if there are no potential locations left
+                if len(self.model.potential_blue_cells) != 0:  # Agent will not move if there are no potential locations left
                     new_location = self.model.random.choice(self.model.potential_blue_cells)
                     self.model.grid.move_agent(self, new_location)
+                    self.model.movements += 1
                     self.model.potential_blue_cells.remove(new_location)
-                    if new_location in self.model.potential_red_cells:      # Makes sure the new location is removed from both lists
+                    if new_location in self.model.potential_red_cells:  # Makes sure the new location is removed from both lists
                         self.model.potential_red_cells.remove(new_location)
             else:
                 if len(self.model.potential_red_cells) != 0:
                     new_location = self.model.random.choice(self.model.potential_red_cells)
                     self.model.grid.move_agent(self, new_location)
+                    self.model.movements += 1
                     self.model.potential_red_cells.remove(new_location)
                     if new_location in self.model.potential_blue_cells:
                         self.model.potential_blue_cells.remove(new_location)
@@ -67,12 +70,12 @@ class Schelling(Model):
     def __init__(self, height=20, width=20, density=0.8, minority_pc=0.2, homophily=3):
 
         self.total_satisfaction_index = 0
-        self.blue_satisfaction_index  = 0
-        self.red_satisfaction_index   = 0
-        self.total_blue_agents_count  = 0
-        self.total_red_agents_count   = 0
-        self.happy_blue_agents_count  = 0
-        self.happy_red_agents_count   = 0
+        self.blue_satisfaction_index = 0
+        self.red_satisfaction_index = 0
+        self.total_blue_agents_count = 0
+        self.total_red_agents_count = 0
+        self.happy_blue_agents_count = 0
+        self.happy_red_agents_count = 0
 
         self.height = height
         self.width = width
@@ -86,16 +89,24 @@ class Schelling(Model):
         self.schedule = RandomActivation(self)
         self.grid = SingleGrid(width, height, torus=True)
 
+        #to count per step the amount of agents that have relocated
+        self.movements = 0
+
+        self.time =0
+
         self.happy = 0
+        self.happiness_reached = False
+
         self.datacollector = DataCollector(
             {
                 "happy": "happy",
                 "total_satisfaction_index": lambda m: self.total_satisfaction_index,
                 "blue_satisfaction_index": lambda m: self.blue_satisfaction_index,
                 "red_satisfaction_index": lambda m: self.red_satisfaction_index,
-            },
-            # For testing purposes, agent's individual x and y
-            {"x": lambda a: a.pos[0], "y": lambda a: a.pos[1]},
+                "segregated_Agents": get_segregation,
+                "happiness reached" : "happiness_reached",
+                "time" : "time"
+            }
         )
 
         # Set up agents
@@ -120,6 +131,7 @@ class Schelling(Model):
         self.datacollector.collect(self)
 
         print("This is model 2")
+
     def step(self):
         """
         Run one step of the model. If All agents are happy, halt the model.
@@ -132,10 +144,9 @@ class Schelling(Model):
             x = cell[1]
             y = cell[2]
 
-            if self.grid.is_cell_empty((x,y)):
+            if self.grid.is_cell_empty((x, y)):
                 list_neighbors = []
-                #print(x, y)
-                get_neighbors_list = self.grid.get_neighbors((x,y),moore = True, radius = 1)
+                get_neighbors_list = self.grid.get_neighbors((x, y), moore=True, radius=1)
 
                 for neighbor in get_neighbors_list:
                     if neighbor.type == 1:
@@ -144,38 +155,60 @@ class Schelling(Model):
                     elif neighbor.type == 0:
                         list_neighbors += [0]
 
-                print(list_neighbors)
-
-                #Defining what satisfies as homophily correct neighborhoods
-                if ((list_neighbors.count(0) + list_neighbors.count(1)) != 0) and ((list_neighbors.count(1) / (list_neighbors.count(0) + list_neighbors.count(1)))) >= self.homophily:
-                    if (x,y) not in self.potential_blue_cells:
+                # Defining what satisfies as homophily correct neighborhoods
+                if ((list_neighbors.count(0) + list_neighbors.count(1)) != 0) and (
+                (list_neighbors.count(1) / (list_neighbors.count(0) + list_neighbors.count(1)))) >= self.homophily:
+                    if (x, y) not in self.potential_blue_cells:
                         self.potential_blue_cells.append((x, y))
 
-                if ((list_neighbors.count(0) + list_neighbors.count(1)) != 0) and ((list_neighbors.count(0) / (list_neighbors.count(0) + list_neighbors.count(1)))) >= self.homophily:
-                    if (x,y) not in self.potential_red_cells:
+                if ((list_neighbors.count(0) + list_neighbors.count(1)) != 0) and (
+                (list_neighbors.count(0) / (list_neighbors.count(0) + list_neighbors.count(1)))) >= self.homophily:
+                    if (x, y) not in self.potential_red_cells:
                         self.potential_red_cells.append((x, y))
 
+        #print(f'list of potential locations blues: {self.potential_blue_cells}')
+        #print(f'list of potential locations reds: {self.potential_red_cells}')
 
-        print(f'list of potential locations blues: {self.potential_blue_cells}')
-        print(f'list of potential locations reds: {self.potential_red_cells}')
 
+        self.happy = 0  # Reset counter of happy agents
+        self.happy_blue_agents_count = 0
+        self.happy_red_agents_count = 0
+        self.movements = 0
+        self.schedule.step()
 
+        self.time = self.schedule.time
 
         # calculates the blue and red satisfaction index
         self.blue_satisfaction_index = float(self.happy_blue_agents_count / max(self.total_blue_agents_count, 1))
-        self.red_satisfaction_index  = float(self.happy_red_agents_count / max(self.total_red_agents_count, 1))
-        
+        self.red_satisfaction_index = float(self.happy_red_agents_count / max(self.total_red_agents_count, 1))
+
         # calculates the total satisfaction index
         total_agents = self.total_blue_agents_count + self.total_red_agents_count
         happy_agents = self.happy_blue_agents_count + self.happy_red_agents_count
         self.total_satisfaction_index = float(happy_agents / total_agents)
 
-        self.happy = 0  # Reset counter of happy agents
-        self.happy_blue_agents_count = 0
-        self.happy_red_agents_count = 0
-        self.schedule.step()
+        if self.happy == self.schedule.get_agent_count():
+            self.happiness_reached = True
         # collect data
         self.datacollector.collect(self)
 
-        if self.happy == self.schedule.get_agent_count():
+
+        #Stop the model when everyone is not moving anymore due to happiness or due to lack of movement
+        if self.movements == 0:
+            print(self.happiness_reached, self.time)
             self.running = False
+
+def get_segregation(model):
+    '''
+    Find the % of agents that only have neighbors of their same type.
+    '''
+    segregated_agents = 0
+    for agent in model.schedule.agents:
+        segregated = True
+        for neighbor in model.grid.neighbor_iter(agent.pos):
+            if neighbor.type != agent.type:
+                segregated = False
+                break
+        if segregated:
+            segregated_agents += 1
+    return segregated_agents / model.schedule.get_agent_count()

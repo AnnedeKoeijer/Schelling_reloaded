@@ -3,7 +3,7 @@ from mesa.visualization.modules import CanvasGrid, ChartModule, TextElement
 from mesa.visualization.UserParam import UserSettableParameter
 
 #Change here what model you want to run here and/or in the run.py file (also change the model params if neccessarily)
-from model1 import Schelling
+from model3b import Schelling
 
 
 class HappyElement(TextElement):
@@ -82,7 +82,7 @@ model_params1_2 = {
     "homophily": UserSettableParameter("slider", "Homophily", 0.4, 0, 1, 0.05),
 }
 
-model_params3 = {
+model_params3a = {
     "height": map_height,
     "width": map_width,
     "density": UserSettableParameter("slider", "Agent density", 0.8, 0.01, 1.0, 0.01),
@@ -90,11 +90,22 @@ model_params3 = {
         "slider", "Fraction minority", 0.3, 0.00, 1.0, 0.01
     ),
     "homophily": UserSettableParameter("slider", "Homophily", 0.4, 0, 1, 0.05),
-    "socioeconomic_homophily_reds": UserSettableParameter("slider", "Socioeconomic homophily reds", 0.5, 0, 1, 0.05),
+    "socioeconomic_homophily_reds": UserSettableParameter("slider", "Socioeconomic homophily reds", 0.3, 0, 1, 0.05),
+    "socioeconomic_homophily_blues": UserSettableParameter("slider", "Socioeconomic homophily blues", 0.5, 0, 1, 0.05)
+}
+
+model_params3b = {
+    "height": map_height,
+    "width": map_width,
+    "density": UserSettableParameter("slider", "Agent density", 0.8, 0.01, 1.0, 0.01),
+    "minority_pc": UserSettableParameter(
+        "slider", "Fraction minority", 0.3, 0.00, 1.0, 0.01
+    ),
+    "homophily": UserSettableParameter("slider", "Homophily", 0.4, 0, 1, 0.05),
     "socioeconomic_homophily_blues": UserSettableParameter("slider", "Socioeconomic homophily blues", 0.5, 0, 1, 0.05)
 }
 
 #Change model params to the respective model (see above)
 server = ModularServer(
-    Schelling, [canvas_element,  agent_number_element, happy_element, happy_chart, index_element, index_chart], "Schelling", model_params1_2
+    Schelling, [canvas_element,  agent_number_element, happy_element, happy_chart, index_element, index_chart], "Schelling", model_params3b
 )

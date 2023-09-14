@@ -38,6 +38,7 @@ class SchellingAgent(Agent):
                 if len(self.model.potential_blue_cells) != 0:       # Agent will not move if there are no potential locations left
                     new_location = self.model.random.choice(self.model.potential_blue_cells)
                     self.model.grid.move_agent(self, new_location)
+                    self.model.movements += 1
                     self.model.potential_blue_cells.remove(new_location)
                     if new_location in self.model.potential_red_cells:      # Makes sure the new location is removed from both lists
                         self.model.potential_red_cells.remove(new_location)
@@ -45,6 +46,7 @@ class SchellingAgent(Agent):
                 if len(self.model.potential_red_cells) != 0:
                     new_location = self.model.random.choice(self.model.potential_red_cells)
                     self.model.grid.move_agent(self, new_location)
+                    self.model.movements += 1
                     self.model.potential_red_cells.remove(new_location)
                     if new_location in self.model.potential_blue_cells:
                         self.model.potential_blue_cells.remove(new_location)
@@ -88,16 +90,21 @@ class Schelling(Model):
         self.schedule = RandomActivation(self)
         self.grid = SingleGrid(width, height, torus=True)
 
+        # to count per step the amount of agents that have relocated
+        self.movements = 0
+
         self.happy = 0
+        self.happiness_reached = False
+
+
         self.datacollector = DataCollector(
             {
                 "happy": "happy",
                 "total_satisfaction_index": lambda m: self.total_satisfaction_index,
                 "blue_satisfaction_index": lambda m: self.blue_satisfaction_index,
                 "red_satisfaction_index": lambda m: self.red_satisfaction_index,
-            },
-            # For testing purposes, agent's individual x and y
-            {"x": lambda a: a.pos[0], "y": lambda a: a.pos[1]},
+                "segregated_Agents": get_segregation
+            }
         )
 
         # Set up agents
@@ -121,7 +128,7 @@ class Schelling(Model):
         self.running = True
         self.datacollector.collect(self)
 
-        print("This is model 3")
+        print("This is model 3a")
     def step(self):
         """
         Run one step of the model. If All agents are happy, halt the model.
@@ -152,50 +159,63 @@ class Schelling(Model):
                             neighbor_index += 1
                             list_neighbors[(neighbor_index - 1)] = 0
 
-                list2 = list_neighbors.copy()
-                list_dubbel = list_neighbors + list2
-                #print(list_dubbel)
+                count_0 = list_neighbors.count(0)
+                count_1 = list_neighbors.count(1)
+                total_count = count_0 + count_1
 
-                #Defining what satisfies as socioeconomic correct neighborhoods
-                for i in range(len(list_dubbel) - (5)): #This for loop is possibly redundant
-                    if all(list_dubbel[i + j] == 1 for j in range(5)):
-                        #print("This location is for blues")
-                        self.potential_blue_cells.append((x, y))
-                        break
-                if ((list_neighbors.count(0) + list_neighbors.count(1)) != 0) and ((list_neighbors.count(1) / (list_neighbors.count(0) + list_neighbors.count(1)))) >= self.socioeconomic_homophily_blues:
-                    if (x,y) not in self.potential_blue_cells:
+                # Defining what satisfies as socioeconomic correct neighborhoods
+                if total_count != 0 and (count_1 / total_count) >= self.socioeconomic_homophily_blues and (
+                        count_1 / total_count) >= self.homophily:
+                    if (x, y) not in self.potential_blue_cells:
                         self.potential_blue_cells.append((x, y))
 
-                for i in range(len(list_dubbel) - 3): #This for loop is possibly redundant
-                    if all(list_dubbel[i + j] == 0 for j in range(3)):
-                        #print("This location is for reds")
-                        self.potential_red_cells.append((x, y))
-                        break
-                if ((list_neighbors.count(0) + list_neighbors.count(1)) != 0) and ((list_neighbors.count(0) / (list_neighbors.count(0) + list_neighbors.count(1)))) >= self.socioeconomic_homophily_reds:
-                    if (x,y) not in self.potential_red_cells:
+                if total_count != 0 and (count_1 / total_count) >= self.socioeconomic_homophily_reds and (
+                        count_1 / total_count) >= self.homophily:
+                    if (x, y) not in self.potential_red_cells:
                         self.potential_red_cells.append((x, y))
 
 
-        print(f'list of potential locations blues: {self.potential_blue_cells}')
-        print(f'list of potential locations reds: {self.potential_red_cells}')
+        #print(f'list of potential locations blues: {self.potential_blue_cells}')
+        #print(f'list of potential locations reds: {self.potential_red_cells}')
 
 
+        self.happy = 0  # Reset counter of happy agents
+        self.happy_blue_agents_count = 0
+        self.happy_red_agents_count = 0
+        self.movements = 0
+
+        self.schedule.step()
 
         # calculates the blue and red satisfaction index
         self.blue_satisfaction_index = float(self.happy_blue_agents_count / max(self.total_blue_agents_count, 1))
-        self.red_satisfaction_index  = float(self.happy_red_agents_count / max(self.total_red_agents_count, 1))
-        
+        self.red_satisfaction_index = float(self.happy_red_agents_count / max(self.total_red_agents_count, 1))
+
         # calculates the total satisfaction index
         total_agents = self.total_blue_agents_count + self.total_red_agents_count
         happy_agents = self.happy_blue_agents_count + self.happy_red_agents_count
         self.total_satisfaction_index = float(happy_agents / total_agents)
 
-        self.happy = 0  # Reset counter of happy agents
-        self.happy_blue_agents_count = 0
-        self.happy_red_agents_count = 0
-        self.schedule.step()
+        if self.happy == self.schedule.get_agent_count():
+            self.happiness_reached = True
         # collect data
         self.datacollector.collect(self)
 
-        if self.happy == self.schedule.get_agent_count():
+        # Stop the model when everyone is not moving anymore due to happiness or due to lack of movement
+        if self.movements == 0:
             self.running = False
+
+#For Datacollector
+def get_segregation(model):
+    '''
+    Find the % of agents that only have neighbors of their same type.
+    '''
+    segregated_agents = 0
+    for agent in model.schedule.agents:
+        segregated = True
+        for neighbor in model.grid.neighbor_iter(agent.pos):
+            if neighbor.type != agent.type:
+                segregated = False
+                break
+        if segregated:
+            segregated_agents += 1
+    return segregated_agents / model.schedule.get_agent_count()
