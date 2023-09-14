@@ -101,7 +101,8 @@ class Schelling(Model):
                 "total_satisfaction_index": lambda m: self.total_satisfaction_index,
                 "blue_satisfaction_index": lambda m: self.blue_satisfaction_index,
                 "red_satisfaction_index": lambda m: self.red_satisfaction_index,
-                "segregated_Agents": get_segregation
+                "segregated_Agents": get_segregation,
+                "happiness reached": "happiness_reached"
             }
         )
 
@@ -110,8 +111,8 @@ class Schelling(Model):
         # the coordinates of a cell as well as
         # its contents. (coord_iter)
         for cell in self.grid.coord_iter():
-            x = cell[1]
-            y = cell[2]
+            x = cell[1][0]
+            y = cell[1][1]
             if self.random.random() < self.density:
                 if self.random.random() < self.minority_pc:
                     agent_type = 1
@@ -120,42 +121,39 @@ class Schelling(Model):
                     agent_type = 0
                     self.total_red_agents_count += 1
                 agent = SchellingAgent((x, y), self, agent_type)
-                self.grid.position_agent(agent, x, y)
+                self.grid.place_agent(agent, (x, y))
                 self.schedule.add(agent)
 
         self.running = True
         self.datacollector.collect(self)
 
-        print("This is model 3a")
+        print("This is model 3b")
     def step(self):
         """
         Run one step of the model. If All agents are happy, halt the model.
         """
+        # Stop the model when everyone is not moving anymore due to happiness or due to lack of movement
+        if self.movements == 0 and self.schedule.time >0:
+            self.running = False
+
         # Creating the lists including the coordinates of potential locations that are
         # within the socioeconomic limits of the blue (minority) and red (majority) agents
         self.potential_blue_cells = []
         self.potential_red_cells = []
         for cell in self.grid.coord_iter():
-            x = cell[1]
-            y = cell[2]
+            x = cell[1][0]
+            y = cell[1][1]
 
             if self.grid.is_cell_empty((x,y)):
-                list_neighbors = [None, None, None, None, None, None, None, None]
-                neighbor_index = 0
-                #print(x, y)
-                get_neighbors_list = get_neighbors_snake(x,y,self.grid)
+                list_neighbors = []
+                get_neighbors_list = self.grid.get_neighbors((x, y), moore=True, radius=1)
 
                 for neighbor in get_neighbors_list:
-                    if neighbor == None:
-                        neighbor_index += 1
-                    else:
-                        if neighbor.type == 1:
-                            neighbor_index += 1
-                            list_neighbors[(neighbor_index - 1)] = 1
+                    if neighbor.type == 1:
+                        list_neighbors += [1]
 
-                        elif neighbor.type == 0:
-                            neighbor_index += 1
-                            list_neighbors[(neighbor_index - 1)] = 0
+                    elif neighbor.type == 0:
+                        list_neighbors += [0]
 
                 count_0 = list_neighbors.count(0)
                 count_1 = list_neighbors.count(1)
@@ -194,10 +192,6 @@ class Schelling(Model):
         # collect data
         self.datacollector.collect(self)
 
-        # Stop the model when everyone is not moving anymore due to happiness or due to lack of movement
-        if self.movements == 0:
-            self.running = False
-
 #For Datacollector
 def get_segregation(model):
     '''
@@ -206,7 +200,7 @@ def get_segregation(model):
     segregated_agents = 0
     for agent in model.schedule.agents:
         segregated = True
-        for neighbor in model.grid.neighbor_iter(agent.pos):
+        for neighbor in model.grid.iter_neighbors(agent.pos, moore=True):
             if neighbor.type != agent.type:
                 segregated = False
                 break

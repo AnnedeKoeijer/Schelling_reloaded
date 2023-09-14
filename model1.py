@@ -3,7 +3,6 @@ from mesa.time import RandomActivation
 from mesa.space import SingleGrid
 from mesa.datacollection import DataCollector
 from random import random
-from functions import get_neighbors_snake
 
 
 class SchellingAgent(Agent):

@@ -3,7 +3,6 @@ from mesa.time import RandomActivation
 from mesa.space import SingleGrid
 from mesa.datacollection import DataCollector
 from random import random
-from functions import get_neighbors_snake
 
 
 class SchellingAgent(Agent):
@@ -114,8 +113,8 @@ class Schelling(Model):
         # the coordinates of a cell as well as
         # its contents. (coord_iter)
         for cell in self.grid.coord_iter():
-            x = cell[1]
-            y = cell[2]
+            x = cell[1][0]
+            y = cell[1][1]
             if self.random.random() < self.density:
                 if self.random.random() < self.minority_pc:
                     agent_type = 1
@@ -124,7 +123,7 @@ class Schelling(Model):
                     agent_type = 0
                     self.total_red_agents_count += 1
                 agent = SchellingAgent((x, y), self, agent_type)
-                self.grid.position_agent(agent, x, y)
+                self.grid.place_agent(agent=agent, pos=(x, y))
                 self.schedule.add(agent)
 
         self.running = True
@@ -136,13 +135,18 @@ class Schelling(Model):
         """
         Run one step of the model. If All agents are happy, halt the model.
         """
+        # Stop the model when everyone is not moving anymore due to happiness or due to lack of movement
+        if self.movements == 0 and self.schedule.time >0:
+            print(self.happiness_reached, self.time)
+            self.running = False
+
         # Creating the lists including the coordinates of potential locations that are
         # within the socioeconomic limits of the blue (minority) and red (majority) agents
         self.potential_blue_cells = []
         self.potential_red_cells = []
         for cell in self.grid.coord_iter():
-            x = cell[1]
-            y = cell[2]
+            x = cell[1][0]
+            y = cell[1][1]
 
             if self.grid.is_cell_empty((x, y)):
                 list_neighbors = []
@@ -193,10 +197,6 @@ class Schelling(Model):
         self.datacollector.collect(self)
 
 
-        #Stop the model when everyone is not moving anymore due to happiness or due to lack of movement
-        if self.movements == 0:
-            print(self.happiness_reached, self.time)
-            self.running = False
 
 def get_segregation(model):
     '''
@@ -205,7 +205,7 @@ def get_segregation(model):
     segregated_agents = 0
     for agent in model.schedule.agents:
         segregated = True
-        for neighbor in model.grid.neighbor_iter(agent.pos):
+        for neighbor in model.grid.iter_neighbors(agent.pos, moore=True):
             if neighbor.type != agent.type:
                 segregated = False
                 break
