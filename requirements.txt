@@ -1,3 +1,4 @@
-jupyter
-matplotlib
-mesa
+jupyter==1.0.0
+matplotlib==3.7.2
+mesa==2.1.1
+pandas==2.0.3

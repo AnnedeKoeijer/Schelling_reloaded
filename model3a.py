@@ -198,7 +198,7 @@ class Schelling(Model):
         # collect data
         self.datacollector.collect(self)
 
-#For Datacollector
+#Function that defines when an agent is segregated (for Datacollector)
 def get_segregation(model):
     '''
     Find the % of agents that only have neighbors of their same type.

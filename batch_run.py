@@ -9,6 +9,7 @@ import pandas as pd
 number_iterations = 100
 max_steps_per_simulation = 200
 
+#For model3a and model3b add the extra parameters
 variable_params = {
     "height": 20,
     "width": 20,

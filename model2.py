@@ -103,8 +103,7 @@ class Schelling(Model):
                 "blue_satisfaction_index": lambda m: self.blue_satisfaction_index,
                 "red_satisfaction_index": lambda m: self.red_satisfaction_index,
                 "segregated_Agents": get_segregation,
-                "happiness reached" : "happiness_reached",
-                "time" : "time"
+                "happiness reached" : "happiness_reached"
             }
         )
 
@@ -137,7 +136,6 @@ class Schelling(Model):
         """
         # Stop the model when everyone is not moving anymore due to happiness or due to lack of movement
         if self.movements == 0 and self.schedule.time >0:
-            print(self.happiness_reached, self.time)
             self.running = False
 
         # Creating the lists including the coordinates of potential locations that are
@@ -197,7 +195,7 @@ class Schelling(Model):
         self.datacollector.collect(self)
 
 
-
+#Function that defines when an agent is segregated (for Datacollector)
 def get_segregation(model):
     '''
     Find the % of agents that only have neighbors of their same type.

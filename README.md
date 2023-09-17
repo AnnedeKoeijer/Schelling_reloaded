@@ -6,16 +6,19 @@ This project contains the following files:
 
 - model1.py: The original Schelling Segregation model, in which a ratio/percentage of homophily is used to determine the satisfaction of an agent and whether it will therefore relocate to a random location
 - model2.py: In this model version the original model is adjusted by eliminating the assumption of random relocation. This is done by ensuring that the agents are only able to move to a cell which satisfices their homophily (this changes are implemented under the step function of the Schelling and SchellignAgent class)
-- model3.py: In this model the agents can only relocate to a cell that is their respective socio-economic "correct" neighborhood. 
+- model3a.py: In this model the red and blue agents can only relocate to a cell that is their respective socio-economic "correct" neighborhood. 
+- model3b.py: In this model **ONLY** the blue agents can only relocate to a cell that is their respective socio-economic "correct" neighborhood. 
 
 - server.py: Contains the visualisations and setup of the model when launched through a server
-- run.py: To run/launch the server
-- analysis:.ipynb To experiment and analyse the results of the different models
-- batch_run.py: -(ignore for now)
+- run.py: To run/launch the server for visualisation of the model run
+- analysis.ipynb: To (batch) run the different models and experiment and analyse the results
+- batch_run.py: Extra file to also batch run the models and save the results to a csv file (for later analysis)
 
 ### Changing between models
 For both the visualisation of models as the analysis of the models, it is important to note how to change between the models. In both files, one of the first lines of code consists of importing the model (e.g. 'from model2 import Schelling'). Simply change the number to work with the respective model.
-Model 3 differs from the other two models as it requires two more parameters. The models require the following parameters:
+Models 3a and 3b differ from the other two models as it requires two or one more parameters respectively. Therefore, when setting up the model run in the analysis.ipynb and batch_run.py, do not forget to add or remove certain parameter values for the respective model. The models require the following parameters:
+
+#### Parameters
 
 - height: of the map/grid (int)
 - width: of the map/grid (int)
@@ -25,9 +28,9 @@ Model 3 differs from the other two models as it requires two more parameters. Th
 
 Only Model 3:
 
-- socioeconomic_homophily_reds: the percentage of similar agents needed in a neighborhood to deem the cell as a "correct" socio-economic neighborhood
+- (model3a): socioeconomic_homophily_reds: the percentage of similar agents needed in a neighborhood to deem the cell as a "correct" socio-economic neighborhood
 - socioeconomic_homophily_blues ''
 
-For the visualisations (file) of the model, changing the parameters can be done by adjusting in the ModularServer function (bottom of the file) the last input to model_params1_2 or model_params3, as there will eb sliders available in the visualisation.
+For the visualisations of the model (server.py), changing the parameters can be done by adjusting in the ModularServer function (bottom of the file) the last input to model_params1_2, model_params3a or model_params3b, as there will be sliders available in the visualisation.
 
  
