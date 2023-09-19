@@ -1,6 +1,6 @@
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.modules import CanvasGrid, ChartModule, TextElement
-from mesa.visualization.UserParam import UserSettableParameter
+from mesa.visualization.UserParam import Slider
 
 #Change here what model you want to run here and/or in the run.py file (also change the model params if neccessarily)
 from model3b import Schelling
@@ -75,34 +75,33 @@ index_chart = ChartModule([
 model_params1_2 = {
     "height": map_height,
     "width": map_width,
-    "density": UserSettableParameter("slider", "Agent density", 0.8, 0.01, 1.0, 0.01),
-    "minority_pc": UserSettableParameter(
-        "slider", "Fraction minority", 0.3, 0.00, 1.0, 0.01
+    "density": Slider("Agent density", 0.8, 0.01, 1.0, 0.01),
+    "minority_pc": Slider(
+        "Fraction minority", 0.3, 0.00, 1.0, 0.01
     ),
-    "homophily": UserSettableParameter("slider", "Homophily", 0.4, 0, 1, 0.05),
+    "homophily": Slider("slider", "Homophily", 0.4, 0, 1, 0.05),
 }
 
 model_params3a = {
     "height": map_height,
     "width": map_width,
-    "density": UserSettableParameter("slider", "Agent density", 0.8, 0.01, 1.0, 0.01),
-    "minority_pc": UserSettableParameter(
-        "slider", "Fraction minority", 0.3, 0.00, 1.0, 0.01
+    "density": Slider("Agent density", 0.8, 0.01, 1.0, 0.01),
+    "minority_pc": Slider(
+        "Fraction minority", 0.3, 0.00, 1.0, 0.01
     ),
-    "homophily": UserSettableParameter("slider", "Homophily", 0.4, 0, 1, 0.05),
-    "socioeconomic_homophily_reds": UserSettableParameter("slider", "Socioeconomic homophily reds", 0.3, 0, 1, 0.05),
-    "socioeconomic_homophily_blues": UserSettableParameter("slider", "Socioeconomic homophily blues", 0.5, 0, 1, 0.05)
+    "homophily": Slider("Homophily", 0.4, 0, 1, 0.05),
+    "socioeconomic_homophily_reds": Slider("Socioeconomic homophily reds", 0.3, 0, 1, 0.05),
+    "socioeconomic_homophily_blues": Slider("Socioeconomic homophily blues", 0.5, 0, 1, 0.05)
 }
 
 model_params3b = {
     "height": map_height,
     "width": map_width,
-    "density": UserSettableParameter("slider", "Agent density", 0.8, 0.01, 1.0, 0.01),
-    "minority_pc": UserSettableParameter(
-        "slider", "Fraction minority", 0.3, 0.00, 1.0, 0.01
+    "density": Slider("Agent density", 0.8, 0.01, 1.0, 0.01),
+    "minority_pc": Slider("Fraction minority", 0.3, 0.00, 1.0, 0.01
     ),
-    "homophily": UserSettableParameter("slider", "Homophily", 0.4, 0, 1, 0.05),
-    "socioeconomic_homophily_blues": UserSettableParameter("slider", "Socioeconomic homophily blues", 0.5, 0, 1, 0.05)
+    "homophily": Slider("Homophily", 0.4, 0, 1, 0.05),
+    "socioeconomic_homophily_blues": Slider("Socioeconomic homophily blues", 0.5, 0, 1, 0.05)
 }
 
 #Change model params to the respective model (see above)
